@@ -1,7 +1,7 @@
 # Lab 3: Networking
 Run the server in one terminal, then run the client in another terminal to check the output.
 
-You can also try to run the server and client in a different lab machines (machines that are connected on the same LAN. Replace localhost or 127.0.0.1 with the IP address of the machine in the code to get it working.
+You can also try to run the server and client in a different lab machines (machines that are connected on the same LAN). Replace localhost or 127.0.0.1 with the IP address of the machine in the code to get it working.
 
 ## Requirements
 1. In the current version there is only one client. But you must create two different 

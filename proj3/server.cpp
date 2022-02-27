@@ -13,16 +13,15 @@
 #include <netinet/in.h>
 #include <string.h>
 #include <string>
-#define PORT 4200
+#include <iostream>
+#define PORT 42069
 
 int main(int argc, char const *argv[])
 {
-    int server_fd, new_socket, valread;
+    int server_fd, new_socket;
     struct sockaddr_in address; // Structures for handling internet addresses
     int opt = 1;
     int addrlen = sizeof(address);
-    char buffer[1024] = {0};
-    std::string hello("Hello from server"); // msg to send to a client
 
     // Creating socket file descriptor
     // create an endpoint for communication. Basically opens a file where both the communicating parties can write
@@ -32,7 +31,7 @@ int main(int argc, char const *argv[])
         exit(EXIT_FAILURE);      // defined in stdlib.h. EXIT_SUCCESS = 0, EXIT_FAILURE = 8
     }
 
-    // Forcefully attaching socket to the port 8080 set the socket options.
+    // Forcefully attaching socket to the port 42069 set the socket options.
     // online resource: https://pubs.opengroup.org/onlinepubs/000095399/functions/setsockopt.html
     if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)))
     {
@@ -47,7 +46,7 @@ int main(int argc, char const *argv[])
     address.sin_addr.s_addr = INADDR_ANY;
     address.sin_port = htons(PORT);
 
-    // Forcefully attaching socket to the port 8080
+    // Forcefully attaching socket to the port 42069
     // bind the socket file descriptor to the socket address.
     // Online resource: https://pubs.opengroup.org/onlinepubs/009695399/functions/bind.html
     if (bind(server_fd, (struct sockaddr *)&address, sizeof(address)) < 0)
@@ -56,7 +55,7 @@ int main(int argc, char const *argv[])
         exit(EXIT_FAILURE);
     }
 
-    // listen for connections on a socket
+    // Listen for connections on a socket.
     if (listen(server_fd, 3) < 0)
     {
         perror("listen");
@@ -69,10 +68,24 @@ int main(int argc, char const *argv[])
         exit(EXIT_FAILURE);
     }
 
-    valread = read(new_socket, buffer, 1024);
-    printf("%s\n", buffer);
-    send(new_socket, hello.c_str(), hello.length(), 0);
-    printf("Hello message sent\n");
+    while (true)
+    {
+        int messageLength;
+        read(new_socket, &messageLength, sizeof(int));
+        std::string message;
+        message.resize(messageLength);
+        read(new_socket, &message[0], messageLength);
+        std::cout << "Recieved message: " << message << std::endl;
+        char integer[4];
+        *((int *)integer) = message.length();
+        send(new_socket, integer, sizeof(int), 0);
+        send(new_socket, message.c_str(), message.length(), 0);
+        if (!message.compare("BYE"))
+        {
+            std::cout << "Server has disconnected." << std::endl;
+            return 0;
+        }
+    }
 
     return 0;
 }
