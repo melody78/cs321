@@ -12,7 +12,8 @@
 #include <unistd.h>
 #include <string>
 #include <iostream>
-#define PORT 42069
+#include <ostream>
+#define PORT 8000
 
 int main(int argc, char const *argv[])
 {
@@ -21,7 +22,7 @@ int main(int argc, char const *argv[])
 
     if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
     {
-        std::cout << "Socket creation error :: cerr" << std::endl;
+        std::cout << "(!) Socket creation error." << std::endl;
         return -1;
     }
 
@@ -31,34 +32,37 @@ int main(int argc, char const *argv[])
     // Convert IPv4 and IPv6 addresses from text to binary form
     if (inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr) <= 0)
     {
-        std::cout << "Invalid address -- address not supported :: cerr" << std::endl;
+        std::cerr << "(!) Invalid address -- current address not supported." << std::endl;
         return -1;
     }
 
     if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
     {
-        std::cout << "Connection Failed :: cerr" << std::endl;
+        std::cerr << "🚫 Connection failed!" << std::endl;
         return -1;
     }
     while (true)
     {
-        std::cout << "Type a message to send: ";
-        std::string sentMessage;
-        std::getline(std::cin,sentMessage);
+        std::cerr << ">> Type a message to send: ";
+        std::string sent_message;
+        std::getline(std::cin, sent_message);
 
         char integer[4];
-        *((int *)integer) = sentMessage.length();
+        *((int *)integer) = sent_message.length();
         send(sock, integer, sizeof(int), 0);
-        send(sock, sentMessage.c_str(), sentMessage.length(), 0);
-        std::cout << "Message sent" << std::endl;
-        // recieve message back
-        int messageLength;
-        read(sock, &messageLength, sizeof(int));
-        std::string recievedMessage;
-        recievedMessage.resize(messageLength);
-        read(sock, &recievedMessage[0], messageLength);
-        std::cout << "Message recived from server: " << recievedMessage.c_str() << std::endl;
-        if (!recievedMessage.compare("BYE"))
+        send(sock, sent_message.c_str(), sent_message.length(), 0);
+        std::cout << "✅ Message sent." << std::endl;
+
+        // Recieve the corresponding message back.
+        int message_length;
+
+        read(sock, &message_length, sizeof(int));
+        std::string recieved_message;
+        recieved_message.resize(message_length);
+        read(sock, &recieved_message[0], message_length);
+        std::cout << "Message recived from server: " << recieved_message.c_str() << std::endl;
+
+        if (!recieved_message.compare("BYE") || !recieved_message.compare("bye"))
         {
             std::cout << "Client has disconnected." << std::endl;
             return 0;
