@@ -6,33 +6,47 @@
 // For CS 321 Spring 2022
 // Lab 3: Server & Client Programming
 
-#include <unistd.h>
+#include <arpa/inet.h>
 #include <cstdio>
-#include <sys/socket.h>
 #include <cstdlib>
-#include <netinet/in.h>
 #include <cstring>
-#include <string>
+#include <ctime>
 #include <iostream>
+#include <errno.h>
+#include <unistd.h>
+#include <netinet/in.h>
+#include <stdlib.h>
+#include <string>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <sys/time.h>
+#include <unistd.h>
+#include <vector>
+
+#define LOCALHOST "127.0.0.1"
 #define PORT 8000
 
-int main(int argc, char const *argv[]) {
-    int server_fd, new_socket;
-    struct sockaddr_in address{}; // Structures for handling internet addresses
+int main(int argc, char const *argv[])
+{
+    int server_fd, master_socket;
+    std::vector<int> sockets{0, 0};
+    struct sockaddr_in address;
     int option = 1;
-    int address_length = sizeof(address);
+    fd_set readfds;
 
-    // Creating socket file descriptor create an endpoint for communication. 
+    // Creating socket file descriptor create an endpoint for communication.
     // Basically opens a file where both the communicating parties can write.
     // [stdlib.h] EXIT_SUCCESS = 0 & EXIT_FAILURE = 8
-    if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
+    if ((master_socket = socket(AF_INET, SOCK_STREAM, 0)) == 0)
+    {
         perror("socket failed");
         exit(EXIT_FAILURE);
     }
 
     // Forcefully attaching socket to the port 8000 set the socket options.
     // https://pubs.opengroup.org/onlinepubs/000095399/functions/setsockopt.html
-    if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option))) {
+    if (setsockopt(master_socket, SOL_SOCKET, SO_REUSEADDR, (char *)&option, sizeof(option)) < 0)
+    {
         perror("setsockopt");
         exit(EXIT_FAILURE);
     }
@@ -46,39 +60,103 @@ int main(int argc, char const *argv[]) {
     // Forcefully attaching socket to the port 8000.
     // Bind the socket file descriptor to the socket address.
     // Online resource: https://pubs.opengroup.org/onlinepubs/009695399/functions/bind.html
-    if (bind(server_fd, (struct sockaddr *)&address, sizeof(address)) < 0) {
+    if (bind(master_socket, (struct sockaddr *)&address, sizeof(address)) < 0)
+    {
         perror("bind failed");
         exit(EXIT_FAILURE);
     }
 
     // Listen for connections on a socket.
-    if (listen(server_fd, 3) < 0) {
+    if (listen(master_socket, 3) < 0)
+    {
         perror("listen");
         exit(EXIT_FAILURE);
     }
 
-    if ((new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t *)&address_length)) < 0) {
-        perror("accept");
-        exit(EXIT_FAILURE);
-    }
+    int address_length = sizeof(address);
 
-    while (true) {
-        int message_length;
+    while (true)
+    {
+        FD_ZERO(&readfds);
 
-        read(new_socket, &message_length, sizeof(int));
-        std::string delivery;
-        delivery.resize(message_length);
-        read(new_socket, &delivery[0], message_length);
-        std::cout << "Received delivery: " << delivery << std::endl;
+        FD_SET(master_socket, &readfds);
+        int max_sd = master_socket;
+        for (int socket : sockets)
+        {
+            if (socket > 0)
+            {
+                FD_SET(socket, &readfds);
+            }
+            if (socket > max_sd)
+            {
+                max_sd = socket;
+            }
+        }
+        int activity = select(max_sd + 1, &readfds, NULL, NULL, NULL); // Use nullptr?
+        std::cout << ("(!) ACTIVITY HAS BEEN DETECTED") << std::endl;
+        if (FD_ISSET(master_socket, &readfds))
+        {
+            std::cout << "A new user has joined the server!" << std::endl;
+            // Take on new connections and add them to the list of sockets.
+            int new_socket;
+            new_socket = accept(master_socket, (struct sockaddr *)&address, (socklen_t *)&address_length);
+            sockets.push_back(new_socket);
+        }
+        else
+        {
+            char buffer[1024];
+            int valread;
+            for (int &sd : sockets)
+            {
+                if (FD_ISSET(sd, &readfds))
+                {
+                    if ((valread = read(sd, buffer, 1024)) == 0)
+                    {
+                        getpeername(sd, (struct sockaddr *)&address,
+                                    (socklen_t *)&address_length);
 
-        char integer[4];
-        *((int *)integer) = delivery.length();
-        send(new_socket, integer, sizeof(int), 0);
-        send(new_socket, delivery.c_str(), delivery.length(), 0);
+                        printf("Host disconnected | IP: %s | PORT: %d \n",
+                               inet_ntoa(address.sin_addr), ntohs(address.sin_port));
 
-        if (!delivery.compare("BYE") || !delivery.compare("bye")) {
-            std::cout << "Server has disconnected." << std::endl;
-            return 0;
+                        close(sd);
+                        sd = 0;
+                        std::cout << ("LEAVING?") << std::endl;
+                    }
+                    else
+                    {
+                        std::cout << ("WHY") << std::endl;
+                    }
+
+                }
+                else
+                {
+                    int message_length = 1024;
+
+                    // valread = read(sd, buffer, 1024);
+                    // buffer[valread] = '\0';
+                    // printf("%s", buffer);
+                    // std::cout << buffer << std::endl;
+                    // send(sd, buffer, strlen(buffer), 0);
+                    // int message_length;
+
+                    // read(sockets[0], &message_length, sizeof(int));
+                    std::string delivery = buffer;
+                    delivery.resize(message_length);
+                    // read(sd, &delivery[0], message_length);
+                    std::cout << "🆕 Received delivery: " << delivery << std::endl;
+
+                    char integer[4];
+                    *((int *)integer) = delivery.length();
+                    // send(sd, integer, sizeof(int), 0);
+                    send(sd, delivery.c_str(), delivery.length(), 0);
+
+                    if (!delivery.compare("BYE") || !delivery.compare("bye"))
+                    {
+                        std::cout << "Server has disconnected." << std::endl;
+                        return 0;
+                    }
+                }
+            }
         }
     }
 }
