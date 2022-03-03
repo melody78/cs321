@@ -21,7 +21,7 @@ int main(int argc, char const *argv[]) {
     struct sockaddr_in server_address{};
 
     if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-        std::cout << "(!) Socket creation error." << std::endl;
+        std::cerr << "⚠️ Socket creation error." << std::endl;
         return -1;
     }
 
@@ -30,7 +30,7 @@ int main(int argc, char const *argv[]) {
 
     // Convert IPv4 and IPv6 addresses from text to binary form
     if (inet_pton(AF_INET, LOCALHOST, &server_address.sin_addr) <= 0) {
-        std::cerr << "(!) Invalid address -- current address not supported." << std::endl;
+        std::cerr << "❌ Invalid address -- current address not supported." << std::endl;
         return -1;
     }
 
@@ -40,8 +40,8 @@ int main(int argc, char const *argv[]) {
     }
 
     while (true) {
-        std::cerr << ">> Type a message to send: ";
         std::string sent_message;
+        std::cout << ">> Type a message to send: ";
         std::getline(std::cin, sent_message);
 
         char integer[4];
@@ -53,14 +53,16 @@ int main(int argc, char const *argv[]) {
         // Receive the corresponding message back.
         int message_length;
 
+        // TODO: Multiple clients (utilizing semaphores -- avoiding threads).
+
         read(sock, &message_length, sizeof(int));
         std::string received_message;
         received_message.resize(message_length);
         read(sock, &received_message[0], message_length);
         std::cout << "Message received from server: " << received_message.c_str() << std::endl;
 
-        if (!received_message.compare("BYE") || !received_message.compare("bye"))
-        {
+        // FIXME: Case-sensitive disconnection message initiation.
+        if (!received_message.compare("BYE") || !received_message.compare("bye")) {
             std::cout << "Client has disconnected." << std::endl;
             return 0;
         }

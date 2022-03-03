@@ -19,7 +19,7 @@
 int main(int argc, char const *argv[]) {
     int server_fd, new_socket;
     struct sockaddr_in address{}; // Structures for handling internet addresses
-    int opt = 1;
+    int option = 1;
     int address_length = sizeof(address);
 
     // Creating socket file descriptor create an endpoint for communication. 
@@ -32,7 +32,7 @@ int main(int argc, char const *argv[]) {
 
     // Forcefully attaching socket to the port 8000 set the socket options.
     // https://pubs.opengroup.org/onlinepubs/000095399/functions/setsockopt.html
-    if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt))) {
+    if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option))) {
         perror("setsockopt");
         exit(EXIT_FAILURE);
     }
@@ -76,8 +76,7 @@ int main(int argc, char const *argv[]) {
         send(new_socket, integer, sizeof(int), 0);
         send(new_socket, delivery.c_str(), delivery.length(), 0);
 
-        if (!delivery.compare("BYE") || !delivery.compare("bye"))
-        {
+        if (!delivery.compare("BYE") || !delivery.compare("bye")) {
             std::cout << "Server has disconnected." << std::endl;
             return 0;
         }
