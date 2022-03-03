@@ -124,13 +124,7 @@ int main(int argc, char const *argv[])
                     }
                     else
                     {
-                        std::cout << ("WHY") << std::endl;
-                    }
-
-                }
-                else
-                {
-                    int message_length = 1024;
+                        int message_length = 1024;
 
                     // valread = read(sd, buffer, 1024);
                     // buffer[valread] = '\0';
@@ -141,19 +135,21 @@ int main(int argc, char const *argv[])
 
                     // read(sockets[0], &message_length, sizeof(int));
                     std::string delivery = buffer;
-                    delivery.resize(message_length);
+                    // delivery.resize(message_length);
                     // read(sd, &delivery[0], message_length);
                     std::cout << "🆕 Received delivery: " << delivery << std::endl;
 
                     char integer[4];
                     *((int *)integer) = delivery.length();
                     // send(sd, integer, sizeof(int), 0);
-                    send(sd, delivery.c_str(), delivery.length(), 0);
+                    send(sd, delivery.c_str(), 1024, 0);
 
                     if (!delivery.compare("BYE") || !delivery.compare("bye"))
                     {
                         std::cout << "Server has disconnected." << std::endl;
                         return 0;
+                    }
+                        std::cout << ("WHY") << std::endl;
                     }
                 }
             }
