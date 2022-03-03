@@ -7,85 +7,78 @@
 // Lab 3: Server & Client Programming
 
 #include <unistd.h>
-#include <stdio.h>
+#include <cstdio>
 #include <sys/socket.h>
-#include <stdlib.h>
+#include <cstdlib>
 #include <netinet/in.h>
-#include <string.h>
+#include <cstring>
 #include <string>
 #include <iostream>
-#define PORT 42069
+#define PORT 8000
 
-int main(int argc, char const *argv[])
-{
+int main(int argc, char const *argv[]) {
     int server_fd, new_socket;
-    struct sockaddr_in address; // Structures for handling internet addresses
-    int opt = 1;
-    int addrlen = sizeof(address);
+    struct sockaddr_in address{}; // Structures for handling internet addresses
+    int option = 1;
+    int address_length = sizeof(address);
 
-    // Creating socket file descriptor
-    // create an endpoint for communication. Basically opens a file where both the communicating parties can write
-    if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0)
-    {
-        perror("socket failed"); // display system error
-        exit(EXIT_FAILURE);      // defined in stdlib.h. EXIT_SUCCESS = 0, EXIT_FAILURE = 8
+    // Creating socket file descriptor create an endpoint for communication. 
+    // Basically opens a file where both the communicating parties can write.
+    // [stdlib.h] EXIT_SUCCESS = 0 & EXIT_FAILURE = 8
+    if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
+        perror("socket failed");
+        exit(EXIT_FAILURE);
     }
 
-    // Forcefully attaching socket to the port 42069 set the socket options.
-    // online resource: https://pubs.opengroup.org/onlinepubs/000095399/functions/setsockopt.html
-    if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)))
-    {
+    // Forcefully attaching socket to the port 8000 set the socket options.
+    // https://pubs.opengroup.org/onlinepubs/000095399/functions/setsockopt.html
+    if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option))) {
         perror("setsockopt");
         exit(EXIT_FAILURE);
     }
 
-    // AF_INET specisies what family of address it is (here it is IPV4)
-    // INADDR_ANY is an IP address that is used when we don't want to bind a socket to any specific IP
-    // host-to-network short. This means it works on 16-bit short integers. i.e. 2 bytes
+    // AF_INET specifies the address family (IPv4).
+    // INADDR_ANY is an IP address that is used for an unspecified IP address.
     address.sin_family = AF_INET;
     address.sin_addr.s_addr = INADDR_ANY;
     address.sin_port = htons(PORT);
 
-    // Forcefully attaching socket to the port 42069
-    // bind the socket file descriptor to the socket address.
+    // Forcefully attaching socket to the port 8000.
+    // Bind the socket file descriptor to the socket address.
     // Online resource: https://pubs.opengroup.org/onlinepubs/009695399/functions/bind.html
-    if (bind(server_fd, (struct sockaddr *)&address, sizeof(address)) < 0)
-    {
+    if (bind(server_fd, (struct sockaddr *)&address, sizeof(address)) < 0) {
         perror("bind failed");
         exit(EXIT_FAILURE);
     }
 
     // Listen for connections on a socket.
-    if (listen(server_fd, 3) < 0)
-    {
+    if (listen(server_fd, 3) < 0) {
         perror("listen");
         exit(EXIT_FAILURE);
     }
 
-    if ((new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t *)&addrlen)) < 0)
-    {
+    if ((new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t *)&address_length)) < 0) {
         perror("accept");
         exit(EXIT_FAILURE);
     }
 
-    while (true)
-    {
-        int messageLength;
-        read(new_socket, &messageLength, sizeof(int));
-        std::string message;
-        message.resize(messageLength);
-        read(new_socket, &message[0], messageLength);
-        std::cout << "Recieved message: " << message << std::endl;
+    while (true) {
+        int message_length;
+
+        read(new_socket, &message_length, sizeof(int));
+        std::string delivery;
+        delivery.resize(message_length);
+        read(new_socket, &delivery[0], message_length);
+        std::cout << "Received delivery: " << delivery << std::endl;
+
         char integer[4];
-        *((int *)integer) = message.length();
+        *((int *)integer) = delivery.length();
         send(new_socket, integer, sizeof(int), 0);
-        send(new_socket, message.c_str(), message.length(), 0);
-        if (!message.compare("BYE"))
-        {
+        send(new_socket, delivery.c_str(), delivery.length(), 0);
+
+        if (!delivery.compare("BYE") || !delivery.compare("bye")) {
             std::cout << "Server has disconnected." << std::endl;
             return 0;
         }
     }
-
-    return 0;
 }
