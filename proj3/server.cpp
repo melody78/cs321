@@ -125,22 +125,11 @@ int main(int argc, char const *argv[])
                     else
                     {
 
-                        // valread = read(sd, buffer, 1024);
-                        // buffer[valread] = '\0';
-                        // printf("%s", buffer);
-                        // std::cout << buffer << std::endl;
-                        // send(sd, buffer, strlen(buffer), 0);
-                        // int message_length;
-
-                        // read(sockets[0], &message_length, sizeof(int));
                         std::string delivery;
                         delivery.resize(message_length);
-                        // delivery.resize(message_length);
                         read(sd, &delivery[0], message_length);
                         std::cout << "🆕 Received delivery: " << delivery << std::endl;
 
-                        // send(sd, integer, sizeof(int), 0);
-                        
                         // send a message to all client that are not the user that sent stuff
                         for (int &sda : sockets)
                         {
@@ -151,8 +140,6 @@ int main(int argc, char const *argv[])
                             }
                         }
 
-                        // send(sd, delivery.c_str(), 1024, 0);
-                        
                         if (!delivery.compare("BYE"))
                         {
                             std::cout << "Server has disconnected." << std::endl;

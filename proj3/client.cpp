@@ -33,10 +33,6 @@ void readHandler(int sock)
     }
 }
 
-void test() {
-
-}
-
 int main(int argc, char const *argv[])
 {
     int sock = 0;
@@ -76,20 +72,5 @@ int main(int argc, char const *argv[])
         send(sock, integer, sizeof(int), 0);
         send(sock, sent_message.c_str(), sent_message.length(), 0);
         std::cout << "✅ Message sent." << std::endl;
-
-        // // Receive the corresponding message back.
-        // int message_length = 1024;
-
-        // // read(sock, &message_length, sizeof(int));
-        // std::string received_message;
-        // received_message.resize(message_length);
-        // read(sock, &received_message[0], message_length);
-        // std::cout << "Message received from server: " << received_message.c_str() << std::endl;
-
-        // if (!received_message.compare("BYE")) // FIXME: client disconnection bug.
-        // {
-        //     std::cout << "Client has disconnected." << std::endl;
-        //     return 0;
-        // }
     }
 }
