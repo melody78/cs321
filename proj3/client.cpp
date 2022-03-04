@@ -26,6 +26,10 @@ void readHandler(int sock)
     {
         int message_length = 1024;
         read(sock, &message_length, sizeof(int));
+        if(message_length == 0)
+        {
+            break;
+        }
         std::string received_message;
         received_message.resize(message_length);
         read(sock, &received_message[0], message_length);

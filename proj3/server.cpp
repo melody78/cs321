@@ -14,6 +14,7 @@
 #include <iostream>
 #include <errno.h>
 #include <netinet/in.h>
+#include <signal.h>
 #include <stdlib.h>
 #include <string>
 #include <sys/socket.h>
@@ -25,10 +26,22 @@
 #define LOCALHOST "127.0.0.1"
 #define PORT 8000
 
+// Disable Control-C interrupt
+void disable_interrupt(int signo) {
+    struct sigaction sa;
+    sa.sa_handler = SIG_IGN;
+    sa.sa_flags = 0;
+
+    if (sigaction(SIGINT, &sa, NULL) == -1) {
+        perror("sigaction");
+        exit(EXIT_FAILURE);
+    }
+}
+
 int main(int argc, char const *argv[])
 {
     int server_fd, master_socket;
-    std::vector<int> sockets{0, 0};
+    std::vector<int> sockets;
     struct sockaddr_in address;
     int option = 1;
     fd_set readfds;
@@ -43,7 +56,6 @@ int main(int argc, char const *argv[])
     }
 
     // Forcefully attaching socket to the port 8000 set the socket options.
-    // https://pubs.opengroup.org/onlinepubs/000095399/functions/setsockopt.html
     if (setsockopt(master_socket, SOL_SOCKET, SO_REUSEADDR, (char *)&option, sizeof(option)) < 0)
     {
         std::cerr << "[setsockopt]" << std::endl;
@@ -58,7 +70,6 @@ int main(int argc, char const *argv[])
 
     // Forcefully attaching socket to the port 8000.
     // Bind the socket file descriptor to the socket address.
-    // Online resource: https://pubs.opengroup.org/onlinepubs/009695399/functions/bind.html
     if (bind(master_socket, (struct sockaddr *)&address, sizeof(address)) < 0)
     {
         std::cerr << "Bind failed!" << std::endl;
@@ -91,7 +102,7 @@ int main(int argc, char const *argv[])
                 max_sd = socket;
             }
         }
-        int activity = select(max_sd + 1, &readfds, NULL, NULL, NULL);
+        select(max_sd + 1, &readfds, NULL, NULL, NULL);
         std::cout << ("(!) ACTIVITY HAS BEEN DETECTED") << std::endl;
         if (FD_ISSET(master_socket, &readfds))
         {
@@ -100,17 +111,22 @@ int main(int argc, char const *argv[])
             int new_socket;
             new_socket = accept(master_socket, (struct sockaddr *)&address, (socklen_t *)&address_length);
             sockets.push_back(new_socket);
+            if(sockets.size() == 1)
+            {
+                int thing = 21;
+                send(new_socket, &thing, sizeof(int), 0);
+                send(new_socket, "only one client is up", 21, 0);
+            }
         }
         else
-        {  
+        {
             std::cout << "Test" << std::endl;
             int message_length;
-            int valread;
             for (int &sd : sockets)
             {
                 if (FD_ISSET(sd, &readfds))
                 {
-                    if ((valread = read(sd, &message_length, sizeof(int))) == 0)
+                    if ((read(sd, &message_length, sizeof(int))) == 0)
                     {
                         getpeername(sd, (struct sockaddr *)&address,
                                     (socklen_t *)&address_length);
