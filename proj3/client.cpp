@@ -18,23 +18,27 @@
 #define LOCALHOST "127.0.0.1"
 #define PORT 8000
 
-void readHandler(int &socket)
+void readHandler(int socket)
 {
     char buffer[1024] = {0};
 
     while (true)
     {
-        auto reada = read(socket, buffer, 1024);
-        if (reada == 0)
+        // read(socket, buffer, 1024);
+        if (buffer == 0)
         {
             std::cout << "Client disconnected." << std::endl;
             break;
         }
         else
         {
-            std::cout << reada << std::endl;
+            // std::cout << buffer << std::endl;
         }
     }
+}
+
+void test() {
+
 }
 
 int main(int argc, char const *argv[])
@@ -64,9 +68,7 @@ int main(int argc, char const *argv[])
         return -1;
     }
 
-    std::thread readThread(&readHandler, socket);
-    readThread.join();
-
+    std::thread readThread(readHandler, sock);
     while (true)
     {
         std::string sent_message;
