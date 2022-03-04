@@ -25,10 +25,6 @@
 #define LOCALHOST "127.0.0.1"
 #define PORT 8000
 
-// TODO:
-// - Implement threading for client
-// - String no worky
-
 int main(int argc, char const *argv[])
 {
     int server_fd, master_socket;
@@ -95,7 +91,7 @@ int main(int argc, char const *argv[])
                 max_sd = socket;
             }
         }
-        int activity = select(max_sd + 1, &readfds, NULL, NULL, NULL); // Use nullptr?
+        int activity = select(max_sd + 1, &readfds, NULL, NULL, NULL);
         std::cout << ("(!) ACTIVITY HAS BEEN DETECTED") << std::endl;
         if (FD_ISSET(master_socket, &readfds))
         {
@@ -106,19 +102,20 @@ int main(int argc, char const *argv[])
             sockets.push_back(new_socket);
         }
         else
-        {
-            char buffer[1024];
+        {  
+            std::cout << "Test" << std::endl;
+            int message_length;
             int valread;
             for (int &sd : sockets)
             {
                 if (FD_ISSET(sd, &readfds))
                 {
-                    if ((valread = read(sd, buffer, 1024)) == 0)
+                    if ((valread = read(sd, &message_length, sizeof(int))) == 0)
                     {
                         getpeername(sd, (struct sockaddr *)&address,
                                     (socklen_t *)&address_length);
 
-                        printf("Host disconnected | IP: %s | PORT: %d \n",
+                        printf("Host disconnected. | IP: %s | PORT: %d \n",
                                inet_ntoa(address.sin_addr), ntohs(address.sin_port));
 
                         close(sd);
@@ -127,7 +124,6 @@ int main(int argc, char const *argv[])
                     }
                     else
                     {
-                        int message_length = 1024;
 
                         // valread = read(sd, buffer, 1024);
                         // buffer[valread] = '\0';
@@ -137,16 +133,26 @@ int main(int argc, char const *argv[])
                         // int message_length;
 
                         // read(sockets[0], &message_length, sizeof(int));
-                        std::string delivery = buffer;
+                        std::string delivery;
+                        delivery.resize(message_length);
                         // delivery.resize(message_length);
-                        // read(sd, &delivery[0], message_length);
+                        read(sd, &delivery[0], message_length);
                         std::cout << "🆕 Received delivery: " << delivery << std::endl;
 
-                        char integer[4];
-                        *((int *)integer) = delivery.length();
                         // send(sd, integer, sizeof(int), 0);
-                        send(sd, delivery.c_str(), 1024, 0);
+                        
+                        // send a message to all client that are not the user that sent stuff
+                        for (int &sda : sockets)
+                        {
+                            if (sda != 0 && sda != sd)
+                            {
+                                send(sda, &message_length, sizeof(int), 0);
+                                send(sda, delivery.c_str(), delivery.length(), 0);
+                            }
+                        }
 
+                        // send(sd, delivery.c_str(), 1024, 0);
+                        
                         if (!delivery.compare("BYE"))
                         {
                             std::cout << "Server has disconnected." << std::endl;
