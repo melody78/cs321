@@ -13,7 +13,6 @@
 #include <ctime>
 #include <iostream>
 #include <errno.h>
-#include <unistd.h>
 #include <netinet/in.h>
 #include <stdlib.h>
 #include <string>
@@ -25,6 +24,10 @@
 
 #define LOCALHOST "127.0.0.1"
 #define PORT 8000
+
+// TODO:
+// - Implement threading for client
+// - String no worky
 
 int main(int argc, char const *argv[])
 {
@@ -39,7 +42,7 @@ int main(int argc, char const *argv[])
     // [stdlib.h] EXIT_SUCCESS = 0 & EXIT_FAILURE = 8
     if ((master_socket = socket(AF_INET, SOCK_STREAM, 0)) == 0)
     {
-        perror("socket failed");
+        std::cerr << "Socket failed." << std::endl;
         exit(EXIT_FAILURE);
     }
 
@@ -47,7 +50,7 @@ int main(int argc, char const *argv[])
     // https://pubs.opengroup.org/onlinepubs/000095399/functions/setsockopt.html
     if (setsockopt(master_socket, SOL_SOCKET, SO_REUSEADDR, (char *)&option, sizeof(option)) < 0)
     {
-        perror("setsockopt");
+        std::cerr << "[setsockopt]" << std::endl;
         exit(EXIT_FAILURE);
     }
 
@@ -62,14 +65,14 @@ int main(int argc, char const *argv[])
     // Online resource: https://pubs.opengroup.org/onlinepubs/009695399/functions/bind.html
     if (bind(master_socket, (struct sockaddr *)&address, sizeof(address)) < 0)
     {
-        perror("bind failed");
+        std::cerr << "Bind failed!" << std::endl;
         exit(EXIT_FAILURE);
     }
 
     // Listen for connections on a socket.
     if (listen(master_socket, 3) < 0)
     {
-        perror("listen");
+        std::cerr << "Listening..." << std::endl;
         exit(EXIT_FAILURE);
     }
 
@@ -126,29 +129,29 @@ int main(int argc, char const *argv[])
                     {
                         int message_length = 1024;
 
-                    // valread = read(sd, buffer, 1024);
-                    // buffer[valread] = '\0';
-                    // printf("%s", buffer);
-                    // std::cout << buffer << std::endl;
-                    // send(sd, buffer, strlen(buffer), 0);
-                    // int message_length;
+                        // valread = read(sd, buffer, 1024);
+                        // buffer[valread] = '\0';
+                        // printf("%s", buffer);
+                        // std::cout << buffer << std::endl;
+                        // send(sd, buffer, strlen(buffer), 0);
+                        // int message_length;
 
-                    // read(sockets[0], &message_length, sizeof(int));
-                    std::string delivery = buffer;
-                    // delivery.resize(message_length);
-                    // read(sd, &delivery[0], message_length);
-                    std::cout << "🆕 Received delivery: " << delivery << std::endl;
+                        // read(sockets[0], &message_length, sizeof(int));
+                        std::string delivery = buffer;
+                        // delivery.resize(message_length);
+                        // read(sd, &delivery[0], message_length);
+                        std::cout << "🆕 Received delivery: " << delivery << std::endl;
 
-                    char integer[4];
-                    *((int *)integer) = delivery.length();
-                    // send(sd, integer, sizeof(int), 0);
-                    send(sd, delivery.c_str(), 1024, 0);
+                        char integer[4];
+                        *((int *)integer) = delivery.length();
+                        // send(sd, integer, sizeof(int), 0);
+                        send(sd, delivery.c_str(), 1024, 0);
 
-                    if (!delivery.compare("BYE") || !delivery.compare("bye"))
-                    {
-                        std::cout << "Server has disconnected." << std::endl;
-                        return 0;
-                    }
+                        if (!delivery.compare("BYE"))
+                        {
+                            std::cout << "Server has disconnected." << std::endl;
+                            return 0;
+                        }
                         std::cout << ("WHY") << std::endl;
                     }
                 }
