@@ -40,7 +40,7 @@ void readHandler(int sock)
 int main(int argc, char const *argv[])
 {
     int sock = 0;
-    struct sockaddr_in server_address;
+    struct sockaddr_in server_address{};
 
     if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
     {

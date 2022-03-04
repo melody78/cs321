@@ -8,18 +8,12 @@
 
 #include <arpa/inet.h>
 #include <cstdio>
+#include <csignal>
 #include <cstdlib>
-#include <cstring>
 #include <ctime>
 #include <iostream>
-#include <errno.h>
 #include <netinet/in.h>
-#include <signal.h>
-#include <stdlib.h>
-#include <string>
 #include <sys/socket.h>
-#include <sys/types.h>
-#include <sys/time.h>
 #include <unistd.h>
 #include <vector>
 
@@ -27,20 +21,20 @@
 #define PORT 8000
 
 void disable_interrupt(int signo) {
-    struct sigaction sa;
+    struct sigaction sa{};
     sa.sa_handler = SIG_IGN;
     sa.sa_flags = 0;
 
-    if (sigaction(SIGINT, &sa, NULL) == -1) {
+    if (sigaction(SIGINT, &sa, nullptr) == -1) {
         std::cerr << ("[sigaction]") << std::endl;
     }
 }
 
 int main(int argc, char const *argv[])
 {
-    int server_fd, master_socket;
+    int master_socket;
     std::vector<int> sockets;
-    struct sockaddr_in address;
+    struct sockaddr_in address{};
     int option = 1;
     fd_set readfds;
     signal(SIGINT, disable_interrupt);
@@ -100,8 +94,7 @@ int main(int argc, char const *argv[])
                 max_sd = socket;
             }
         }
-        select(max_sd + 1, &readfds, NULL, NULL, NULL);
-        std::cout << ("(!) ACTIVITY HAS BEEN DETECTED") << std::endl;
+        select(max_sd + 1, &readfds, nullptr, nullptr, nullptr);
         if (FD_ISSET(master_socket, &readfds))
         {
             std::cout << "A new user has joined the server!" << std::endl;
@@ -118,7 +111,6 @@ int main(int argc, char const *argv[])
         }
         else
         {
-            std::cout << "Test" << std::endl;
             int message_length;
             for (int &sd : sockets)
             {
@@ -144,7 +136,7 @@ int main(int argc, char const *argv[])
                         read(sd, &delivery[0], message_length);
                         std::cout << "🆕 Received delivery: " << delivery << std::endl;
 
-                        // send a message to all client that are not the user that sent stuff
+                        // Send a message to all client(s) that are not the user that sent stuff.
                         for (int &sda : sockets)
                         {
                             if (sda != 0 && sda != sd)
@@ -159,7 +151,6 @@ int main(int argc, char const *argv[])
                             std::cout << "Server has disconnected." << std::endl;
                             return 0;
                         }
-                        std::cout << ("WHY") << std::endl;
                     }
                 }
             }
