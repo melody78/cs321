@@ -26,15 +26,13 @@
 #define LOCALHOST "127.0.0.1"
 #define PORT 8000
 
-// Disable Control-C interrupt
 void disable_interrupt(int signo) {
     struct sigaction sa;
     sa.sa_handler = SIG_IGN;
     sa.sa_flags = 0;
 
     if (sigaction(SIGINT, &sa, NULL) == -1) {
-        perror("sigaction");
-        exit(EXIT_FAILURE);
+        std::cerr << ("[sigaction]") << std::endl;
     }
 }
 
@@ -45,7 +43,7 @@ int main(int argc, char const *argv[])
     struct sockaddr_in address;
     int option = 1;
     fd_set readfds;
-
+    signal(SIGINT, disable_interrupt);
     // Creating socket file descriptor create an endpoint for communication.
     // Basically opens a file where both the communicating parties can write.
     // [stdlib.h] EXIT_SUCCESS = 0 & EXIT_FAILURE = 8

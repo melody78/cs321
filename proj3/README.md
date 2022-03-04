@@ -11,12 +11,12 @@ the client messages from the user.
 - [x] Currently, the server is accepting a client message (request) and sending a
 response message to the same client. In your new version, the server should 
 forward the accepted message from one client to the other client. 
-- [ ] The server should work properly only when two clients are up and connecting to 
+- [x] The server should work properly only when two clients are up and connecting to 
 it. If there is only one client connecting to the server then, the server will send a 
 message complaining "only one client is up"
 - [x] The process should not end only after one pass of message between server and 
 client as it is now. Server will only stop if one of the clients sends ‘BYE’ message
-- [ ] The server process should be designed in such a way so that it cannot be 
+- [x] The server process should be designed in such a way so that it cannot be 
 aborted by hitting ctrl-c on that terminal
     - [x] For the sake of simplicity, assume that both your client and servers are on the 
 same machine i.e. `localhost` (`127.0.0.1`)
