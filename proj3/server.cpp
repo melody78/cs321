@@ -7,8 +7,8 @@
 // Lab 3: Server & Client Programming
 
 #include <arpa/inet.h>
-#include <cstdio>
 #include <csignal>
+#include <cstdio>
 #include <cstdlib>
 #include <ctime>
 #include <iostream>
@@ -126,7 +126,6 @@ int main(int argc, char const *argv[])
 
                         close(sd);
                         sd = 0;
-                        std::cout << ("LEAVING?") << std::endl;
                     }
                     else
                     {
@@ -136,7 +135,7 @@ int main(int argc, char const *argv[])
                         read(sd, &delivery[0], message_length);
                         std::cout << "🆕 Received delivery: " << delivery << std::endl;
 
-                        // Send a message to all client(s) that are not the user that sent stuff.
+                        // Send a message to all client(s) that are not the sending user.
                         for (int &sda : sockets)
                         {
                             if (sda != 0 && sda != sd)
